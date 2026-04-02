@@ -11,6 +11,7 @@ import com.apto.model.enums.StatusAnuncio;
 import com.apto.repository.AnuncioRepository;
 import com.apto.repository.LocadorRepository;
 import com.apto.repository.MoradiaRepository;
+import com.apto.repository.UsuarioUniversitarioRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -23,17 +24,25 @@ public class AnuncioService {
     private final AnuncioRepository anuncioRepository;
     private final MoradiaRepository moradiaRepository;
     private final LocadorRepository locadorRepository;
+    private final UsuarioUniversitarioRepository universitarioRepository;
+
     public AnuncioService(AnuncioRepository anuncioRepository,
                           MoradiaRepository moradiaRepository,
-                          LocadorRepository locadorRepository) {
+                          LocadorRepository locadorRepository,
+                          UsuarioUniversitarioRepository universitarioRepository) {
         this.anuncioRepository = anuncioRepository;
         this.moradiaRepository = moradiaRepository;
         this.locadorRepository = locadorRepository;
+        this.universitarioRepository = universitarioRepository;
     }
 
     public AnuncioResponseDTO criar(CriarAnuncioRequestDTO dto){
+        if(universitarioRepository.existsById(dto.anuncianteId())) {
+            throw new AcessoNegadoException("Apenas locadores podem criar anuncios");
+        }
+
         Locador locador = locadorRepository.findById(dto.anuncianteId())
-                .orElseThrow(() -> new AcessoNegadoException("Apenas locadores podem criar anúncios"));
+                .orElseThrow(() -> new LocadorNaoEncontradoException("Locador não encontrado com id  " + dto.anuncianteId()));
 
         Anuncio anuncio = new Anuncio();
         anuncio.setAnunciante(locador);
