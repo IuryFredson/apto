@@ -4,8 +4,10 @@ package com.apto.service;
 import com.apto.dto.request.AtualizarMoradiaRequestDTO;
 import com.apto.dto.request.CriarMoradiaRequestDTO;
 import com.apto.dto.response.MoradiaResponseDTO;
+import com.apto.exception.MoradiaAssociadaComAnuncioException;
 import com.apto.exception.MoradiaNaoEncontradaException;
 import com.apto.model.entity.Moradia;
+import com.apto.repository.AnuncioRepository;
 import com.apto.repository.MoradiaRepository;
 import org.springframework.stereotype.Service;
 
@@ -16,9 +18,11 @@ import java.util.UUID;
 public class MoradiaService {
 
     private final MoradiaRepository moradiaRepository;
+    private final AnuncioRepository anuncioRepository;
 
-    public MoradiaService(MoradiaRepository moradiaRepository) {
+    public MoradiaService(MoradiaRepository moradiaRepository, AnuncioRepository anuncioRepository) {
         this.moradiaRepository = moradiaRepository;
+        this.anuncioRepository = anuncioRepository;
     }
     public MoradiaResponseDTO criar(CriarMoradiaRequestDTO dto){
         Moradia moradia = new Moradia();
@@ -41,7 +45,7 @@ public class MoradiaService {
                 .toList();
     }
 
-    public MoradiaResponseDTO BuscarPorId(UUID id){
+    public MoradiaResponseDTO buscarPorId(UUID id){
         Moradia moradia = buscarEntidadePorId(id);
         return toResponseDTO(moradia);
 
@@ -68,6 +72,9 @@ public class MoradiaService {
 
     public void deletar(UUID id){
         Moradia moradia = buscarEntidadePorId(id);
+        if(anuncioRepository.existsByMoradia(moradia)){
+            throw new MoradiaAssociadaComAnuncioException("Não é possível remover uma moradia que possui anúncio associado");
+        }
         moradiaRepository.delete(moradia);
     }
 
