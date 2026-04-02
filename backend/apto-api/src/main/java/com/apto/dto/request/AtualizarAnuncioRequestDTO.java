@@ -21,5 +21,5 @@ public record AtualizarAnuncioRequestDTO(
         BigDecimal valorMensal,
 
         @NotNull
-        TipoAnuncio TipoAnuncio
+        TipoAnuncio tipoAnuncio
 ) {}
