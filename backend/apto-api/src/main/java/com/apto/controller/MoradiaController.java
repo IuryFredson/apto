@@ -26,6 +26,11 @@ public class MoradiaController {
         return ResponseEntity.ok(moradiaService.listarTodos());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<MoradiaResponseDTO> buscarPorId(@PathVariable UUID id) {
+        return ResponseEntity.ok(moradiaService.buscarPorId(id));
+    }
+
     @PostMapping
     public ResponseEntity<MoradiaResponseDTO> criar(@Valid @RequestBody CriarMoradiaRequestDTO dto){
         return ResponseEntity.status(HttpStatus.CREATED).body(moradiaService.criar(dto));
