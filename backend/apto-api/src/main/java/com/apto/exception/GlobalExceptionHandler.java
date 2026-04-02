@@ -78,4 +78,10 @@ public class GlobalExceptionHandler {
         erro.put("erro", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(erro);
     }
+    @ExceptionHandler(MoradiaAssociadaComAnuncioException.class)
+    public ResponseEntity<Map<String,String>> handleMoradiaAssociadaComAnuncio(MoradiaAssociadaComAnuncioException ex) {
+        Map<String, String> erro = new HashMap<>();
+        erro.put("erro", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(erro);
+    }
 }
