@@ -23,7 +23,7 @@ public record AtualizarMoradiaRequestDTO(
 
         @NotNull
         @PositiveOrZero
-        int quantidadeVagas,
+        Integer quantidadeVagas,
 
         @NotBlank
         @Size(min = 2, max = 255)
