@@ -5,8 +5,8 @@ import com.apto.dto.request.CriarAnuncioRequestDTO;
 import com.apto.dto.response.AnuncioResponseDTO;
 import com.apto.exception.*;
 import com.apto.model.entity.Anuncio;
+import com.apto.model.entity.Locador;
 import com.apto.model.entity.Moradia;
-import com.apto.model.entity.Usuario;
 import com.apto.model.enums.StatusAnuncio;
 import com.apto.repository.AnuncioRepository;
 import com.apto.repository.LocadorRepository;
@@ -32,8 +32,11 @@ public class AnuncioService {
     }
 
     public AnuncioResponseDTO criar(CriarAnuncioRequestDTO dto){
-        Anuncio anuncio = new Anuncio();
+        Locador locador = locadorRepository.findById(dto.anuncianteId())
+                .orElseThrow(() -> new AcessoNegadoException("Apenas locadores podem criar anúncios"));
 
+        Anuncio anuncio = new Anuncio();
+        anuncio.setAnunciante(locador);
         anuncio.setTitulo(dto.titulo());
         anuncio.setDescricao(dto.descricao());
         anuncio.setValorMensal(dto.valorMensal());
@@ -43,10 +46,6 @@ public class AnuncioService {
         Moradia moradia = moradiaRepository.findById(dto.moradiaId())
                 .orElseThrow(() -> new MoradiaNaoEncontradaException("Moradia não encontrada com id " + dto.moradiaId()));
         anuncio.setMoradia(moradia);
-
-        Usuario anunciante = locadorRepository.findById(dto.anuncianteId())
-                .orElseThrow(() -> new UsuarioNaoEncontradoException("Locador não encontrado com id: " + dto.anuncianteId()));
-
         anuncio.setDataPublicacao(LocalDate.now());
 
         Anuncio salvar = anuncioRepository.save(anuncio);
