@@ -75,8 +75,12 @@ public class AnuncioService {
         anuncioRepository.delete(anuncio);
     }
 
-    public AnuncioResponseDTO atualizar(UUID id, AtualizarAnuncioRequestDTO dto){
+    public AnuncioResponseDTO atualizar(UUID id, UUID anuncianteId, AtualizarAnuncioRequestDTO dto){
         Anuncio anuncio = buscarEntidadePorId(id);
+
+        if(!anuncio.getAnunciante().getId().equals(anuncianteId)){
+            throw new AcessoNegadoException("Usuário não tem permissão para editar este anúncio");
+        }
 
         anuncio.setTitulo(dto.titulo());
         anuncio.setDescricao(dto.descricao());

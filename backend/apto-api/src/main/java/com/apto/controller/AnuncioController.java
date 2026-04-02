@@ -37,8 +37,11 @@ public class AnuncioController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AnuncioResponseDTO> atualizar(@PathVariable UUID id, @Valid @RequestBody AtualizarAnuncioRequestDTO dto){
-        return ResponseEntity.ok(anuncioService.atualizar(id,dto));
+    public ResponseEntity<AnuncioResponseDTO> atualizar(
+            @PathVariable UUID id,
+            @RequestParam UUID anuncianteId,
+            @Valid @RequestBody AtualizarAnuncioRequestDTO dto){
+        return ResponseEntity.ok(anuncioService.atualizar(id, anuncianteId, dto));
     }
 
     @PatchMapping("/{id}/status")
