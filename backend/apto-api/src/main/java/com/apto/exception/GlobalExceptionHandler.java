@@ -57,4 +57,31 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(erros);
     }
+
+    @ExceptionHandler(MoradiaNaoEncontradaException.class)
+    public ResponseEntity<Map<String,String>> handleMoradiaNaoEncontrada(MoradiaNaoEncontradaException ex) {
+        Map<String, String> erro = new HashMap<>();
+        erro.put("erro", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(erro);
+    }
+
+    @ExceptionHandler(AnuncioNaoEncontradoException.class)
+    public ResponseEntity<Map<String,String>> handleAnuncioNaoEncontrado(AnuncioNaoEncontradoException ex) {
+        Map<String, String> erro = new HashMap<>();
+        erro.put("erro", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(erro);
+    }
+
+    @ExceptionHandler(AcessoNegadoException.class)
+    public ResponseEntity<Map<String,String>> handleAcessoNegado(AcessoNegadoException ex) {
+        Map<String, String> erro = new HashMap<>();
+        erro.put("erro", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(erro);
+    }
+    @ExceptionHandler(MoradiaAssociadaComAnuncioException.class)
+    public ResponseEntity<Map<String,String>> handleMoradiaAssociadaComAnuncio(MoradiaAssociadaComAnuncioException ex) {
+        Map<String, String> erro = new HashMap<>();
+        erro.put("erro", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(erro);
+    }
 }
