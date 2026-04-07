@@ -2,6 +2,7 @@ package com.apto.service;
 
 import com.apto.dto.request.AtualizarAnuncioRequestDTO;
 import com.apto.dto.request.CriarAnuncioRequestDTO;
+import com.apto.dto.request.FiltroBuscaAnuncioDTO;
 import com.apto.dto.response.AnuncioResponseDTO;
 import com.apto.dto.response.BuscaAnuncioResponseDTO;
 import com.apto.dto.response.PaginaResponseDTO;
@@ -106,8 +107,17 @@ public class AnuncioService {
         return toResponseDTO(anuncioRepository.save(anuncio));
     }
 
-    public PaginaResponseDTO<BuscaAnuncioResponseDTO> buscarAnuncios(Pageable pageable) {
-        Page<Anuncio> pagina = anuncioRepository.findByStatus(StatusAnuncio.ATIVO, pageable);
+    public PaginaResponseDTO<BuscaAnuncioResponseDTO> buscarAnuncios(FiltroBuscaAnuncioDTO filtro, Pageable pageable) {
+        Page<Anuncio> pagina = anuncioRepository.buscarComFiltros(
+                filtro.valorMin(),
+                filtro.valorMax(),
+                filtro.bairro(),
+                filtro.tipoMoradia(),
+                filtro.tipoAnuncio(),
+                filtro.mobiliado(),
+                filtro.aceitaAnimais(),
+                filtro.quantidadeVagas(),
+                pageable);
         List<BuscaAnuncioResponseDTO> conteudo = pagina.getContent()
                 .stream()
                 .map(this::toBuscaResponseDTO)
