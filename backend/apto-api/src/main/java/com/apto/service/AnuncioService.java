@@ -3,6 +3,8 @@ package com.apto.service;
 import com.apto.dto.request.AtualizarAnuncioRequestDTO;
 import com.apto.dto.request.CriarAnuncioRequestDTO;
 import com.apto.dto.response.AnuncioResponseDTO;
+import com.apto.dto.response.BuscaAnuncioResponseDTO;
+import com.apto.dto.response.PaginaResponseDTO;
 import com.apto.exception.*;
 import com.apto.model.entity.Anuncio;
 import com.apto.model.entity.Locador;
@@ -12,6 +14,8 @@ import com.apto.repository.AnuncioRepository;
 import com.apto.repository.LocadorRepository;
 import com.apto.repository.MoradiaRepository;
 import com.apto.repository.UsuarioUniversitarioRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -100,6 +104,42 @@ public class AnuncioService {
         Anuncio anuncio = buscarEntidadePorId(id);
         anuncio.setStatus(status);
         return toResponseDTO(anuncioRepository.save(anuncio));
+    }
+
+    public PaginaResponseDTO<BuscaAnuncioResponseDTO> buscarAnuncios(Pageable pageable) {
+        Page<Anuncio> pagina = anuncioRepository.findByStatus(StatusAnuncio.ATIVO, pageable);
+        List<BuscaAnuncioResponseDTO> conteudo = pagina.getContent()
+                .stream()
+                .map(this::toBuscaResponseDTO)
+                .toList();
+        return new PaginaResponseDTO<>(
+                conteudo,
+                pagina.getNumber(),
+                pagina.getTotalPages(),
+                pagina.getTotalElements(),
+                pagina.getSize()
+        );
+    }
+
+    private BuscaAnuncioResponseDTO toBuscaResponseDTO(Anuncio anuncio) {
+        Moradia moradia = anuncio.getMoradia();
+        return new BuscaAnuncioResponseDTO(
+                anuncio.getId(),
+                anuncio.getTitulo(),
+                anuncio.getDescricao(),
+                anuncio.getValorMensal(),
+                anuncio.getTipoAnuncio(),
+                anuncio.getStatus(),
+                anuncio.getDataPublicacao(),
+                moradia.getId(),
+                moradia.getTipoMoradia(),
+                moradia.getBairro(),
+                moradia.getEnderecoResumo(),
+                moradia.isMobiliado(),
+                moradia.isAceitaAnimais(),
+                moradia.getQuantidadeVagas(),
+                anuncio.getAnunciante().getNome()
+        );
     }
 
     private AnuncioResponseDTO toResponseDTO(Anuncio anuncio) {

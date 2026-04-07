@@ -2,9 +2,13 @@ package com.apto.controller;
 
 import com.apto.dto.request.*;
 import com.apto.dto.response.AnuncioResponseDTO;
+import com.apto.dto.response.BuscaAnuncioResponseDTO;
+import com.apto.dto.response.PaginaResponseDTO;
 import com.apto.model.enums.StatusAnuncio;
 import com.apto.service.AnuncioService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +28,12 @@ public class AnuncioController {
     @GetMapping
     public ResponseEntity<List<AnuncioResponseDTO>> listarTodos() {
         return ResponseEntity.ok(anuncioService.listarTodos());
+    }
+
+    @GetMapping("/busca")
+    public ResponseEntity<PaginaResponseDTO<BuscaAnuncioResponseDTO>> buscarAnuncios(
+            @PageableDefault(size = 10, sort = "dataPublicacao") Pageable pageable) {
+        return ResponseEntity.ok(anuncioService.buscarAnuncios(pageable));
     }
 
     @GetMapping("/{id}")
