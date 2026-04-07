@@ -10,6 +10,7 @@ import com.apto.exception.*;
 import com.apto.model.entity.Anuncio;
 import com.apto.model.entity.Locador;
 import com.apto.model.entity.Moradia;
+import com.apto.model.entity.Usuario;
 import com.apto.model.enums.StatusAnuncio;
 import com.apto.repository.AnuncioRepository;
 import com.apto.repository.LocadorRepository;
@@ -42,23 +43,27 @@ public class AnuncioService {
     }
 
     public AnuncioResponseDTO criar(CriarAnuncioRequestDTO dto){
-        if(universitarioRepository.existsById(dto.anuncianteId())) {
-            throw new AcessoNegadoException("Apenas locadores podem criar anuncios");
+
+        Usuario anunciante = locadorRepository.findById(dto.anuncianteId())
+                .map(locador -> (Usuario) locador)
+                .orElseGet(() -> universitarioRepository.findById(dto.anuncianteId())
+                        .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com id " + dto.anuncianteId())));
+
+        Moradia moradia = moradiaRepository.findById(dto.moradiaId())
+                .orElseThrow(() -> new MoradiaNaoEncontradaException("Moradia não encontrada com id " + dto.moradiaId()));
+
+        if(anuncioRepository.existsByMoradia(moradia)){
+            throw new MoradiaAssociadaComAnuncioException("A moradia já está associada com um anuncio.");
         }
 
-        Locador locador = locadorRepository.findById(dto.anuncianteId())
-                .orElseThrow(() -> new LocadorNaoEncontradoException("Locador não encontrado com id  " + dto.anuncianteId()));
-
         Anuncio anuncio = new Anuncio();
-        anuncio.setAnunciante(locador);
+        anuncio.setAnunciante(anunciante);
         anuncio.setTitulo(dto.titulo());
         anuncio.setDescricao(dto.descricao());
         anuncio.setValorMensal(dto.valorMensal());
         anuncio.setTipoAnuncio(dto.tipoAnuncio());
         anuncio.setStatus(StatusAnuncio.ATIVO);
 
-        Moradia moradia = moradiaRepository.findById(dto.moradiaId())
-                .orElseThrow(() -> new MoradiaNaoEncontradaException("Moradia não encontrada com id " + dto.moradiaId()));
         anuncio.setMoradia(moradia);
         anuncio.setDataPublicacao(LocalDate.now());
 
