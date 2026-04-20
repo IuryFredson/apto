@@ -84,4 +84,11 @@ public class GlobalExceptionHandler {
         erro.put("erro", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(erro);
     }
+
+    @ExceptionHandler(DenunciaNaoEncontradaException.class)
+    public ResponseEntity<Map<String,String>> handleDenunciaNaoEncontrada(DenunciaNaoEncontradaException ex) {
+        Map<String, String> erro = new HashMap<>();
+        erro.put("erro", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(erro);
+    }
 }
