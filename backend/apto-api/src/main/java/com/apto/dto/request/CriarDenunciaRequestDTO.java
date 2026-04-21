@@ -19,8 +19,5 @@ public record CriarDenunciaRequestDTO(
     String titulo,
     @Size(min = 2, max = 1000)
     @NotBlank
-    String corpo,
-
-    @NotBlank
-    StatusDenuncia statusDenuncia
+    String corpo
 ){}
