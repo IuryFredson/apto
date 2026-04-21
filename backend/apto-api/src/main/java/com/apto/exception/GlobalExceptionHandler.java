@@ -89,6 +89,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String,String>> handleDenunciaNaoEncontrada(DenunciaNaoEncontradaException ex) {
         Map<String, String> erro = new HashMap<>();
         erro.put("erro", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(erro);
+    }
+    @ExceptionHandler(TransicaoInvalidaStatusException.class)
+    public ResponseEntity<Map<String,String>> handleTransicaoInvalidaStatus(TransicaoInvalidaStatusException ex) {
+        Map<String, String> erro = new HashMap<>();
+        erro.put("erro", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(erro);
     }
 }
