@@ -5,14 +5,18 @@ import com.apto.dto.request.CriarDenunciaRequestDTO;
 import com.apto.dto.response.DenunciaResponseDTO;
 import com.apto.exception.*;
 import com.apto.model.entity.*;
+import com.apto.model.enums.StatusDenuncia;
 import com.apto.repository.AnuncioRepository;
 import com.apto.repository.DenunciaRepository;
 import com.apto.repository.LocadorRepository;
 import com.apto.repository.UsuarioUniversitarioRepository;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
+@Service
 public class DenunciaService {
     private final DenunciaRepository denunciaRepository;
     private final UsuarioUniversitarioRepository universitarioRepository;
@@ -26,6 +30,13 @@ public class DenunciaService {
         this.anuncioRepository = anuncioRepository;
     }
 
+    public List<DenunciaResponseDTO> listarTodas(){
+        return denunciaRepository.findAll()
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
+
     public DenunciaResponseDTO criar(CriarDenunciaRequestDTO dto){
         Usuario denunciante = locadorRepository.findById(dto.denuncianteId())
                 .map(locador -> (Usuario) locador)
@@ -37,7 +48,8 @@ public class DenunciaService {
 
 
         Denuncia denuncia = new Denuncia();
-        denuncia.setStatusDenuncia(dto.statusDenuncia());
+        denuncia.setStatusDenuncia(StatusDenuncia.PENDENTE);
+        denuncia.setStatusAtualizadoEm(LocalDateTime.now());
         denuncia.setAnuncio(anuncio);
         denuncia.setDenunciante(denunciante);
         denuncia.setTitulo(dto.titulo());
@@ -48,9 +60,25 @@ public class DenunciaService {
 
     public DenunciaResponseDTO atualizar(UUID id, AtualizarDenunciaRequestDTO dto){
         Denuncia denuncia = buscarEntidadePorId(id);
+
+        if(denuncia.getStatusDenuncia() == StatusDenuncia.ARQUIVADA){
+            throw new IllegalStateException("A denuncia já está arquivada, não poderá ser alterada.");
+        }
+
         Anuncio anuncio = anuncioRepository.findById(dto.anuncioId())
                 .orElseThrow(() -> new AnuncioNaoEncontradoException("Anuncio não encontrado com id " + dto.anuncioId()));
+        denuncia.setAnuncio(anuncio);
+        return toResponseDTO(denunciaRepository.save(denuncia));
+    }
 
+    public DenunciaResponseDTO atualizarStatus(UUID id, StatusDenuncia novoStatus){
+        Denuncia denuncia = buscarEntidadePorId(id);
+        StatusDenuncia statusAtual = denuncia.getStatusDenuncia();
+        if(!transicaoValida(statusAtual, novoStatus)){
+            throw new TransicaoInvalidaStatusException("Transição inválida de Status " + statusAtual + " para " + novoStatus + ".");
+        }
+        denuncia.setStatusDenuncia(novoStatus);
+        denuncia.setStatusAtualizadoEm(LocalDateTime.now());
         return toResponseDTO(denunciaRepository.save(denuncia));
     }
 
@@ -79,5 +107,22 @@ public class DenunciaService {
                 denuncia.getStatusDenuncia(),
                 denuncia.getCriadoEm()
         );
+    }
+
+    //valida se a ida do status atual para outro novo é válida
+    private boolean transicaoValida(StatusDenuncia atual, StatusDenuncia novo) {
+        switch (atual) {
+            case PENDENTE:
+                return novo == StatusDenuncia.EM_ANALISE;
+            case EM_ANALISE:
+                return novo == StatusDenuncia.PROCEDENTE || novo == StatusDenuncia.IMPROCEDENTE;
+            case PROCEDENTE:
+            case IMPROCEDENTE:
+                return novo == StatusDenuncia.ARQUIVADA;
+            case ARQUIVADA:
+                return false;
+            default:
+                return false;
+        }
     }
 }
