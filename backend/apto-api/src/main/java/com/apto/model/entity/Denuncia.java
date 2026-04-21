@@ -43,5 +43,6 @@ public class Denuncia {
     @Column(name="criado_em", nullable = false)
     private LocalDateTime criadoEm;
 
-
+    @Column(name = "status_atualizado_em")
+    private LocalDateTime statusAtualizadoEm;
 }
