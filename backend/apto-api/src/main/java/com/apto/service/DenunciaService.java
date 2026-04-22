@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class DenunciaService {
@@ -58,20 +59,7 @@ public class DenunciaService {
         return toResponseDTO(denunciaRepository.save(denuncia));
     }
 
-    public DenunciaResponseDTO atualizar(UUID id, AtualizarDenunciaRequestDTO dto){
-        Denuncia denuncia = buscarEntidadePorId(id);
-
-        if(denuncia.getStatusDenuncia() == StatusDenuncia.ARQUIVADA){
-            throw new IllegalStateException("A denuncia já está arquivada, não poderá ser alterada.");
-        }
-
-        Anuncio anuncio = anuncioRepository.findById(dto.anuncioId())
-                .orElseThrow(() -> new AnuncioNaoEncontradoException("Anuncio não encontrado com id " + dto.anuncioId()));
-        denuncia.setAnuncio(anuncio);
-        return toResponseDTO(denunciaRepository.save(denuncia));
-    }
-
-    public DenunciaResponseDTO atualizarStatus(UUID id, StatusDenuncia novoStatus){
+       public DenunciaResponseDTO atualizarStatus(UUID id, StatusDenuncia novoStatus){
         Denuncia denuncia = buscarEntidadePorId(id);
         StatusDenuncia statusAtual = denuncia.getStatusDenuncia();
         if(!transicaoValida(statusAtual, novoStatus)){
@@ -95,6 +83,21 @@ public class DenunciaService {
     public DenunciaResponseDTO buscarPorId(UUID id){
         Denuncia denuncia = buscarEntidadePorId(id);
         return toResponseDTO(denuncia);
+    }
+
+    public List<DenunciaResponseDTO> buscarPorAnuncio(Anuncio anuncio){
+        List<Denuncia> denuncias = denunciaRepository.findByAnuncio(anuncio);
+        return denuncias.stream().map(this::toResponseDTO).toList();
+    }
+
+    public List<DenunciaResponseDTO> buscarPorUsuario(Usuario usuario){
+        List<Denuncia> denuncias = denunciaRepository.findByUsuario(usuario);
+        return denuncias.stream().map(this::toResponseDTO).toList();
+    }
+
+    public List<DenunciaResponseDTO> buscarPorStatus(StatusDenuncia status){
+        List<Denuncia> denuncias = denunciaRepository.findByStatusDenuncia(status);
+        return denuncias.stream().map(this::toResponseDTO).toList();
     }
 
     private DenunciaResponseDTO toResponseDTO(Denuncia denuncia) {
