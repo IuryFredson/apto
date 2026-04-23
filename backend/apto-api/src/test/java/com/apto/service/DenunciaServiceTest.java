@@ -176,7 +176,7 @@ public class DenunciaServiceTest {
     @Test
     void deveBuscarDenunciasPorUsuario() {
         when(locadorRepository.findById(denuncianteId)).thenReturn(Optional.of(denunciante));
-        when(denunciaRepository.findByUsuario(denunciante)).thenReturn(List.of(denuncia));
+        when(denunciaRepository.findByDenunciante(denunciante)).thenReturn(List.of(denuncia));
 
         List<DenunciaResponseDTO> result = denunciaService.buscarPorUsuarioId(denuncianteId);
 
@@ -189,7 +189,7 @@ public class DenunciaServiceTest {
         when(universitarioRepository.findById(denuncianteId)).thenReturn(Optional.empty());
 
         assertThrows(UsuarioNaoEncontradoException.class, () -> denunciaService.buscarPorUsuarioId(denuncianteId));
-        verify(denunciaRepository, never()).findByUsuario(any());
+        verify(denunciaRepository, never()).findByDenunciante(any());
     }
 
     @Test

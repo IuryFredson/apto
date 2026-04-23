@@ -11,6 +11,6 @@ import java.util.UUID;
 
 public interface DenunciaRepository extends JpaRepository<Denuncia, UUID> {
     List<Denuncia> findByAnuncio(Anuncio anuncio);
-    List<Denuncia> findByUsuario(Usuario usuario);
+    List<Denuncia> findByDenunciante(Usuario denunciante);
     List<Denuncia> findByStatusDenuncia(StatusDenuncia statusDenuncia);
 }

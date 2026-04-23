@@ -92,7 +92,7 @@ public class DenunciaService {
 
     public List<DenunciaResponseDTO> buscarPorUsuarioId(UUID usuarioId){
         Usuario usuario = buscarUsuarioPorId(usuarioId);
-        return denunciaRepository.findByUsuario(usuario)
+        return denunciaRepository.findByDenunciante(usuario)
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
