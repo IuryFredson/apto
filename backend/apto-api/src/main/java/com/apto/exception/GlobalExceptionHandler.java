@@ -148,4 +148,10 @@ public class GlobalExceptionHandler {
         erro.put("erro", ex.getMessage());
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(erro);
     }
+    @ExceptionHandler(PerfilConvivenciaAusenteException.class)
+    public ResponseEntity<Map<String, String>> handlePerfilConvivenciaAusente(PerfilConvivenciaAusenteException ex) {
+        Map<String, String> erro = new HashMap<>();
+        erro.put("erro", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(erro);
+    }
 }
