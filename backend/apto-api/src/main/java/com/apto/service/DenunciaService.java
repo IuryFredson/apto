@@ -1,6 +1,5 @@
 package com.apto.service;
 
-import com.apto.dto.request.AtualizarDenunciaRequestDTO;
 import com.apto.dto.request.CriarDenunciaRequestDTO;
 import com.apto.dto.response.DenunciaResponseDTO;
 import com.apto.exception.*;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class DenunciaService {
@@ -39,27 +37,24 @@ public class DenunciaService {
     }
 
     public DenunciaResponseDTO criar(CriarDenunciaRequestDTO dto){
-        Usuario denunciante = locadorRepository.findById(dto.denuncianteId())
-                .map(locador -> (Usuario) locador)
-                .orElseGet(() -> universitarioRepository.findById(dto.denuncianteId())
-                        .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com id " + dto.denuncianteId())));
+        Usuario denunciante = buscarUsuarioPorId(dto.denuncianteId());
 
         Anuncio anuncio = anuncioRepository.findById(dto.anuncioId())
                 .orElseThrow(() -> new AnuncioNaoEncontradoException("Anuncio não encontrado com id " + dto.anuncioId()));
 
-
+        LocalDateTime atual = LocalDateTime.now();
         Denuncia denuncia = new Denuncia();
         denuncia.setStatusDenuncia(StatusDenuncia.PENDENTE);
-        denuncia.setStatusAtualizadoEm(LocalDateTime.now());
+        denuncia.setStatusAtualizadoEm(atual);
         denuncia.setAnuncio(anuncio);
         denuncia.setDenunciante(denunciante);
         denuncia.setTitulo(dto.titulo());
         denuncia.setCorpo(dto.corpo());
-        denuncia.setCriadoEm(LocalDateTime.now());
+        denuncia.setCriadoEm(atual);
         return toResponseDTO(denunciaRepository.save(denuncia));
     }
 
-       public DenunciaResponseDTO atualizarStatus(UUID id, StatusDenuncia novoStatus){
+    public DenunciaResponseDTO atualizarStatus(UUID id, StatusDenuncia novoStatus){
         Denuncia denuncia = buscarEntidadePorId(id);
         StatusDenuncia statusAtual = denuncia.getStatusDenuncia();
         if(!transicaoValida(statusAtual, novoStatus)){
@@ -85,14 +80,22 @@ public class DenunciaService {
         return toResponseDTO(denuncia);
     }
 
-    public List<DenunciaResponseDTO> buscarPorAnuncio(Anuncio anuncio){
-        List<Denuncia> denuncias = denunciaRepository.findByAnuncio(anuncio);
-        return denuncias.stream().map(this::toResponseDTO).toList();
+    public List<DenunciaResponseDTO> buscarPorAnuncioId(UUID anuncioId){
+        Anuncio anuncio = anuncioRepository.findById(anuncioId)
+                .orElseThrow(() -> new AnuncioNaoEncontradoException("Anuncio não encontrado com id " + anuncioId));
+
+        return denunciaRepository.findByAnuncio(anuncio)
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
     }
 
-    public List<DenunciaResponseDTO> buscarPorUsuario(Usuario usuario){
-        List<Denuncia> denuncias = denunciaRepository.findByUsuario(usuario);
-        return denuncias.stream().map(this::toResponseDTO).toList();
+    public List<DenunciaResponseDTO> buscarPorUsuarioId(UUID usuarioId){
+        Usuario usuario = buscarUsuarioPorId(usuarioId);
+        return denunciaRepository.findByUsuario(usuario)
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
     }
 
     public List<DenunciaResponseDTO> buscarPorStatus(StatusDenuncia status){
@@ -127,5 +130,13 @@ public class DenunciaService {
             default:
                 return false;
         }
+    }
+
+    private Usuario buscarUsuarioPorId(UUID id) {
+        return locadorRepository.findById(id)
+                .map(locador -> (Usuario) locador)
+                .orElseGet(() -> universitarioRepository.findById(id)
+                        .orElseThrow(() -> new UsuarioNaoEncontradoException(
+                                "Usuário não encontrado com id " + id)));
     }
 }
