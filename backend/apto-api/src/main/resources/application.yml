@@ -12,3 +12,10 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+apto:
+  groq:
+    base-url: https://api.groq.com/openai/v1
+    model: llama-3.3-70b-versatile
+    api-key: ${GROQ_API_KEY:}
+    timeout: 30s
