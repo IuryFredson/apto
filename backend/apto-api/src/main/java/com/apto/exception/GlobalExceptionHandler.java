@@ -84,4 +84,39 @@ public class GlobalExceptionHandler {
         erro.put("erro", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(erro);
     }
+
+    @ExceptionHandler(ManifestacaoInteresseNaoEncontradaException.class)
+    public ResponseEntity<Map<String,String>> handleManifestacaoInteresseNaoEncontrada(ManifestacaoInteresseNaoEncontradaException ex) {
+        Map<String, String> erro = new HashMap<>();
+        erro.put("erro", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(erro);
+    }
+
+    @ExceptionHandler(ManifestacaoInteresseDuplicadaException.class)
+    public ResponseEntity<Map<String,String>> handleManifestacaoInteresseDuplicada(ManifestacaoInteresseDuplicadaException ex) {
+        Map<String, String> erro = new HashMap<>();
+        erro.put("erro", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(erro);
+    }
+
+    @ExceptionHandler(ManifestacaoInteresseInvalidaException.class)
+    public ResponseEntity<Map<String,String>> handleManifestacaoInteresseInvalida(ManifestacaoInteresseInvalidaException ex) {
+        Map<String, String> erro = new HashMap<>();
+        erro.put("erro", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(erro);
+    }
+
+    @ExceptionHandler(TransicaoInvalidaManifestacaoException.class)
+    public ResponseEntity<Map<String,String>> handleTransicaoInvalidaManifestacao(TransicaoInvalidaManifestacaoException ex) {
+        Map<String, String> erro = new HashMap<>();
+        erro.put("erro", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(erro);
+    }
+
+    @ExceptionHandler(AnuncioNaoAtivoException.class)
+    public ResponseEntity<Map<String,String>> handleAnuncioNaoAtivo(AnuncioNaoAtivoException ex) {
+        Map<String, String> erro = new HashMap<>();
+        erro.put("erro", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(erro);
+    }
 }
