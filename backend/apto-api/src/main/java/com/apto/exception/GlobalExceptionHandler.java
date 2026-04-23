@@ -141,4 +141,11 @@ public class GlobalExceptionHandler {
         erro.put("erro", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
     }
+
+    @ExceptionHandler(GroqIntegracaoException.class)
+    public ResponseEntity<Map<String,String>> handleGroqIntegracao(GroqIntegracaoException ex) {
+        Map<String, String> erro = new HashMap<>();
+        erro.put("erro", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(erro);
+    }
 }
