@@ -1,78 +1,310 @@
 package com.apto.service;
 
+import com.apto.dto.request.CriarDenunciaRequestDTO;
+import com.apto.dto.response.DenunciaResponseDTO;
+import com.apto.exception.*;
 import com.apto.model.entity.*;
-import com.apto.model.enums.*;
-import com.apto.repository.*;
+import com.apto.model.enums.StatusDenuncia;
+import com.apto.repository.AnuncioRepository;
+import com.apto.repository.DenunciaRepository;
+import com.apto.repository.LocadorRepository;
+import com.apto.repository.UsuarioUniversitarioRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class DenunciaServiceTest {
 
     @Mock
-    private AnuncioRepository anuncioRepository;
+    private DenunciaRepository denunciaRepository;
+    @Mock
+    private UsuarioUniversitarioRepository universitarioRepository;
     @Mock
     private LocadorRepository locadorRepository;
     @Mock
-    private UsuarioUniversitarioRepository usuarioUniversitarioRepository;
-    @Mock
-    private DenunciaRepository denunciaRepository;
+    private AnuncioRepository anuncioRepository;
 
     @InjectMocks
     private DenunciaService denunciaService;
 
+    private UUID denuncianteId;
+    private UUID anuncioId;
+    private UUID denunciaId;
+
+    private Locador denunciante;
+    private Anuncio anuncio;
+    private Denuncia denuncia;
+
+    private CriarDenunciaRequestDTO criarDTO;
+
     @BeforeEach
     void setUp() {
-        Locador usuario = new Locador();
-        usuario.setId(UUID.randomUUID());
-        usuario.setNome("Gabriel Silva");
-        usuario.setEmail("gabriel@email.com");
-        usuario.setDocumentoIdentificacao("12345678900");
-        usuario.setNomeExibicaoOuRazao("Gabriel Imóveis");
+        denuncianteId = UUID.randomUUID();
+        anuncioId = UUID.randomUUID();
+        denunciaId = UUID.randomUUID();
 
-        Moradia moradia = new Moradia();
-        moradia.setId(UUID.randomUUID());
-        moradia.setBairro("Centro");
-        moradia.setTipoMoradia(TipoMoradia.APARTAMENTO);
-        moradia.setMobiliado(true);
-        moradia.setAceitaAnimais(false);
-        moradia.setQuantidadeVagas(1);
+        denunciante = new Locador();
+        denunciante.setId(denuncianteId);
+        denunciante.setNome("João Silva");
 
-        Anuncio anuncio = new Anuncio();
-        anuncio.setId(UUID.randomUUID());
-        anuncio.setTitulo("Apto centro");
-        anuncio.setDescricao("Ótima localização");
-        anuncio.setValorMensal(new BigDecimal("1200.00"));
-        anuncio.setTipoAnuncio(TipoAnuncio.IMOVEL_COMPLETO);
-        anuncio.setStatus(StatusAnuncio.ATIVO);
-        anuncio.setDataPublicacao(LocalDate.now());
-        Locador locadorAnunciante = new Locador();
-        locadorAnunciante.setId(UUID.randomUUID());
+        anuncio = new Anuncio();
+        anuncio.setId(anuncioId);
 
-        locadorAnunciante.setNome("João Silva");
-
-        anuncio.setAnunciante(locadorAnunciante);
-        anuncio.setMoradia(moradia);
-
-        Denuncia denuncia = new Denuncia();
-
-        denuncia.setId(UUID.randomUUID());
+        denuncia = new Denuncia();
+        denuncia.setId(denunciaId);
+        denuncia.setDenunciante(denunciante);
         denuncia.setAnuncio(anuncio);
-        denuncia.setDenunciante(usuario);
-        denuncia.setTitulo("Titulo da denuncia");
-        denuncia.setCorpo("Corpo da denuncia");
+        denuncia.setTitulo("Anúncio enganoso");
+        denuncia.setCorpo("O anúncio contém informações falsas sobre o imóvel.");
         denuncia.setStatusDenuncia(StatusDenuncia.PENDENTE);
-        denuncia.setCriadoEm(LocalDateTime.now());
-        denuncia.setStatusAtualizadoEm(LocalDateTime.now());
 
+        criarDTO = new CriarDenunciaRequestDTO(
+                denuncianteId,
+                anuncioId,
+                "Anúncio enganoso",
+                "O anúncio contém informações falsas sobre o imóvel."
+        );
     }
 
+    @Test
+    void deveCriarDenunciaComDadosValidos() {
+        when(locadorRepository.findById(denuncianteId)).thenReturn(Optional.of(denunciante));
+        when(anuncioRepository.findById(anuncioId)).thenReturn(Optional.of(anuncio));
+        when(denunciaRepository.save(any(Denuncia.class))).thenReturn(denuncia);
+
+        DenunciaResponseDTO response = denunciaService.criar(criarDTO);
+
+        assertNotNull(response);
+        assertEquals(denunciaId, response.id());
+        assertEquals(StatusDenuncia.PENDENTE, response.statusDenuncia());
+        verify(denunciaRepository).save(any(Denuncia.class));
+    }
+
+    @Test
+    void deveCriarDenunciaQuandoDenuncianteEhUniversitario() {
+        UsuarioUniversitario universitario = new UsuarioUniversitario();
+        universitario.setId(denuncianteId);
+        denuncia.setDenunciante(universitario);
+
+        when(locadorRepository.findById(denuncianteId)).thenReturn(Optional.empty());
+        when(universitarioRepository.findById(denuncianteId)).thenReturn(Optional.of(universitario));
+        when(anuncioRepository.findById(anuncioId)).thenReturn(Optional.of(anuncio));
+        when(denunciaRepository.save(any(Denuncia.class))).thenReturn(denuncia);
+
+        DenunciaResponseDTO response = denunciaService.criar(criarDTO);
+
+        assertNotNull(response);
+        verify(denunciaRepository).save(any(Denuncia.class));
+    }
+
+    @Test
+    void naoDeveCriarDenunciaSeUsuarioNaoEncontrado() {
+        when(locadorRepository.findById(denuncianteId)).thenReturn(Optional.empty());
+        when(universitarioRepository.findById(denuncianteId)).thenReturn(Optional.empty());
+
+        assertThrows(UsuarioNaoEncontradoException.class, () -> denunciaService.criar(criarDTO));
+        verify(denunciaRepository, never()).save(any());
+    }
+
+    @Test
+    void naoDeveCriarDenunciaSeAnuncioNaoEncontrado() {
+        when(locadorRepository.findById(denuncianteId)).thenReturn(Optional.of(denunciante));
+        when(anuncioRepository.findById(anuncioId)).thenReturn(Optional.empty());
+
+        assertThrows(AnuncioNaoEncontradoException.class, () -> denunciaService.criar(criarDTO));
+        verify(denunciaRepository, never()).save(any());
+    }
+
+    @Test
+    void deveListarTodasDenuncias() {
+        when(denunciaRepository.findAll()).thenReturn(List.of(denuncia));
+
+        List<DenunciaResponseDTO> result = denunciaService.listarTodas();
+
+        assertEquals(1, result.size());
+        verify(denunciaRepository).findAll();
+    }
+
+    @Test
+    void deveBuscarDenunciaPorId() {
+        when(denunciaRepository.findById(denunciaId)).thenReturn(Optional.of(denuncia));
+
+        DenunciaResponseDTO response = denunciaService.buscarPorId(denunciaId);
+
+        assertNotNull(response);
+        assertEquals(denunciaId, response.id());
+    }
+
+    @Test
+    void naoDeveBuscarDenunciaComIdInexistente() {
+        when(denunciaRepository.findById(denunciaId)).thenReturn(Optional.empty());
+
+        assertThrows(DenunciaNaoEncontradaException.class, () -> denunciaService.buscarPorId(denunciaId));
+    }
+
+    @Test
+    void deveBuscarDenunciasPorAnuncio() {
+        when(anuncioRepository.findById(anuncioId)).thenReturn(Optional.of(anuncio));
+        when(denunciaRepository.findByAnuncio(anuncio)).thenReturn(List.of(denuncia));
+
+        List<DenunciaResponseDTO> result = denunciaService.buscarPorAnuncioId(anuncioId);
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void naoDeveBuscarDenunciasPorAnuncioInexistente() {
+        when(anuncioRepository.findById(anuncioId)).thenReturn(Optional.empty());
+
+        assertThrows(AnuncioNaoEncontradoException.class, () -> denunciaService.buscarPorAnuncioId(anuncioId));
+        verify(denunciaRepository, never()).findByAnuncio(any());
+    }
+
+
+    @Test
+    void deveBuscarDenunciasPorUsuario() {
+        when(locadorRepository.findById(denuncianteId)).thenReturn(Optional.of(denunciante));
+        when(denunciaRepository.findByUsuario(denunciante)).thenReturn(List.of(denuncia));
+
+        List<DenunciaResponseDTO> result = denunciaService.buscarPorUsuarioId(denuncianteId);
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void naoDeveBuscarDenunciasPorUsuarioInexistente() {
+        when(locadorRepository.findById(denuncianteId)).thenReturn(Optional.empty());
+        when(universitarioRepository.findById(denuncianteId)).thenReturn(Optional.empty());
+
+        assertThrows(UsuarioNaoEncontradoException.class, () -> denunciaService.buscarPorUsuarioId(denuncianteId));
+        verify(denunciaRepository, never()).findByUsuario(any());
+    }
+
+    @Test
+    void deveBuscarDenunciasPorStatus() {
+        when(denunciaRepository.findByStatusDenuncia(StatusDenuncia.PENDENTE)).thenReturn(List.of(denuncia));
+
+        List<DenunciaResponseDTO> result = denunciaService.buscarPorStatus(StatusDenuncia.PENDENTE);
+
+        assertEquals(1, result.size());
+        verify(denunciaRepository).findByStatusDenuncia(StatusDenuncia.PENDENTE);
+    }
+
+    @Test
+    void deveAtualizarStatusDePendenteParaEmAnalise() {
+        denuncia.setStatusDenuncia(StatusDenuncia.PENDENTE);
+        when(denunciaRepository.findById(denunciaId)).thenReturn(Optional.of(denuncia));
+        when(denunciaRepository.save(any(Denuncia.class))).thenReturn(denuncia);
+
+        DenunciaResponseDTO response = denunciaService.atualizarStatus(denunciaId, StatusDenuncia.EM_ANALISE);
+
+        assertNotNull(response);
+        verify(denunciaRepository).save(denuncia);
+    }
+
+    @Test
+    void deveAtualizarStatusDeEmAnaliseParaProcedente() {
+        denuncia.setStatusDenuncia(StatusDenuncia.EM_ANALISE);
+        when(denunciaRepository.findById(denunciaId)).thenReturn(Optional.of(denuncia));
+        when(denunciaRepository.save(any(Denuncia.class))).thenReturn(denuncia);
+
+        DenunciaResponseDTO response = denunciaService.atualizarStatus(denunciaId, StatusDenuncia.PROCEDENTE);
+
+        assertNotNull(response);
+        verify(denunciaRepository).save(denuncia);
+    }
+
+    @Test
+    void deveAtualizarStatusDeEmAnaliseParaImprocedente() {
+        denuncia.setStatusDenuncia(StatusDenuncia.EM_ANALISE);
+        when(denunciaRepository.findById(denunciaId)).thenReturn(Optional.of(denuncia));
+        when(denunciaRepository.save(any(Denuncia.class))).thenReturn(denuncia);
+
+        DenunciaResponseDTO response = denunciaService.atualizarStatus(denunciaId, StatusDenuncia.IMPROCEDENTE);
+
+        assertNotNull(response);
+        verify(denunciaRepository).save(denuncia);
+    }
+
+    @Test
+    void deveAtualizarStatusDeProcedenteParaArquivada() {
+        denuncia.setStatusDenuncia(StatusDenuncia.PROCEDENTE);
+        when(denunciaRepository.findById(denunciaId)).thenReturn(Optional.of(denuncia));
+        when(denunciaRepository.save(any(Denuncia.class))).thenReturn(denuncia);
+
+        DenunciaResponseDTO response = denunciaService.atualizarStatus(denunciaId, StatusDenuncia.ARQUIVADA);
+
+        assertNotNull(response);
+        verify(denunciaRepository).save(denuncia);
+    }
+
+    @Test
+    void deveAtualizarStatusDeImprocedenteParaArquivada() {
+        denuncia.setStatusDenuncia(StatusDenuncia.IMPROCEDENTE);
+        when(denunciaRepository.findById(denunciaId)).thenReturn(Optional.of(denuncia));
+        when(denunciaRepository.save(any(Denuncia.class))).thenReturn(denuncia);
+
+        DenunciaResponseDTO response = denunciaService.atualizarStatus(denunciaId, StatusDenuncia.ARQUIVADA);
+
+        assertNotNull(response);
+        verify(denunciaRepository).save(denuncia);
+    }
+
+    @Test
+    void naoDeveAtualizarStatusComTransicaoInvalidaDePendenteParaProcedente() {
+        denuncia.setStatusDenuncia(StatusDenuncia.PENDENTE);
+        when(denunciaRepository.findById(denunciaId)).thenReturn(Optional.of(denuncia));
+
+        assertThrows(TransicaoInvalidaStatusException.class,
+                () -> denunciaService.atualizarStatus(denunciaId, StatusDenuncia.PROCEDENTE));
+        verify(denunciaRepository, never()).save(any());
+    }
+
+    @Test
+    void naoDeveAtualizarStatusComTransicaoInvalidaDeArquivadaParaQualquerStatus() {
+        denuncia.setStatusDenuncia(StatusDenuncia.ARQUIVADA);
+        when(denunciaRepository.findById(denunciaId)).thenReturn(Optional.of(denuncia));
+
+        assertThrows(TransicaoInvalidaStatusException.class,
+                () -> denunciaService.atualizarStatus(denunciaId, StatusDenuncia.PENDENTE));
+        verify(denunciaRepository, never()).save(any());
+    }
+
+    @Test
+    void naoDeveAtualizarStatusCasoDenunciaNaoExista() {
+        when(denunciaRepository.findById(denunciaId)).thenReturn(Optional.empty());
+
+        assertThrows(DenunciaNaoEncontradaException.class,
+                () -> denunciaService.atualizarStatus(denunciaId, StatusDenuncia.EM_ANALISE));
+        verify(denunciaRepository, never()).save(any());
+    }
+
+    @Test
+    void deveDeletarDenunciaValida() {
+        when(denunciaRepository.findById(denunciaId)).thenReturn(Optional.of(denuncia));
+
+        denunciaService.deletar(denunciaId);
+
+        verify(denunciaRepository).delete(denuncia);
+    }
+
+    @Test
+    void naoDeveDeletarDenunciaInexistente() {
+        when(denunciaRepository.findById(denunciaId)).thenReturn(Optional.empty());
+
+        assertThrows(DenunciaNaoEncontradaException.class, () -> denunciaService.deletar(denunciaId));
+        verify(denunciaRepository, never()).delete(any());
+    }
 }
