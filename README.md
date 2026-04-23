@@ -42,5 +42,5 @@ O backend já está configurado para conectar no PostgreSQL local:
 
 ## Status
 
-- Em desenvolvimento (Sprint 1)
+- Em desenvolvimento (Sprint 2)
 
