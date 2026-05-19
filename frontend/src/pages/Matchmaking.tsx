@@ -33,8 +33,8 @@ export default function Matchmaking() {
         if (e instanceof ApiError) {
           if (
             (e.status === 400 || e.status === 422) &&
-            (typeof e.message === "string" &&
-              e.message.toLowerCase().includes("perfil"))
+            typeof e.serverMessage === "string" &&
+            e.serverMessage.toLowerCase().includes("perfil")
           ) {
             setPerfilIncompleto(true);
           } else {

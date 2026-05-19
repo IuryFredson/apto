@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Filter, MapPin, PawPrint, Sofa, Users } from "lucide-react";
+import { Filter, MapPin, PawPrint, Sofa, Users, X } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
@@ -21,11 +21,10 @@ import type {
   TipoMoradia,
 } from "../api/types";
 
+const FILTRO_INICIAL: FiltroBuscaAnuncio = { page: 0, size: 12 };
+
 export default function Buscar() {
-  const [filtro, setFiltro] = useState<FiltroBuscaAnuncio>({
-    page: 0,
-    size: 12,
-  });
+  const [filtro, setFiltro] = useState<FiltroBuscaAnuncio>(FILTRO_INICIAL);
   const [pagina, setPagina] = useState<PaginaResponse<BuscaAnuncioResponse> | null>(
     null,
   );
@@ -52,24 +51,51 @@ export default function Buscar() {
     setFiltro((prev) => ({ ...prev, [key]: value, page: 0 }));
   }
 
+  function limparFiltros() {
+    setFiltro(FILTRO_INICIAL);
+  }
+
+  const temFiltrosAtivos =
+    filtro.bairro !== undefined ||
+    filtro.valorMin !== undefined ||
+    filtro.valorMax !== undefined ||
+    filtro.quantidadeVagas !== undefined ||
+    filtro.tipoMoradia !== undefined ||
+    filtro.tipoAnuncio !== undefined ||
+    filtro.mobiliado !== undefined ||
+    filtro.aceitaAnimais !== undefined;
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 pb-20">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-apto-text-main">
           Buscar moradias
         </h1>
-        <Button
-          variant="secondary"
-          onClick={() => setFiltrosAbertos((v) => !v)}
-          className="flex items-center gap-2"
-        >
-          <Filter size={16} />
-          {filtrosAbertos ? "Fechar filtros" : "Filtros"}
-        </Button>
+        <div className="flex items-center gap-2">
+          {temFiltrosAtivos && (
+            <Button
+              variant="ghost"
+              onClick={limparFiltros}
+              className="flex items-center gap-2"
+            >
+              <X size={16} />
+              Limpar filtros
+            </Button>
+          )}
+          <Button
+            variant="secondary"
+            onClick={() => setFiltrosAbertos((v) => !v)}
+            className="flex items-center gap-2"
+          >
+            <Filter size={16} />
+            {filtrosAbertos ? "Fechar filtros" : "Filtros"}
+          </Button>
+        </div>
       </div>
 
       {filtrosAbertos && (
-        <div className="bg-white rounded-apto-section border border-apto-border p-5 mb-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-apto-section border border-apto-border p-5 mb-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Input
             label="Bairro"
             value={filtro.bairro ?? ""}
@@ -175,6 +201,18 @@ export default function Buscar() {
               { value: "false", label: "Não" },
             ]}
           />
+          </div>
+          <div className="flex justify-end mt-4 pt-4 border-t border-apto-border">
+            <Button
+              variant="ghost"
+              onClick={limparFiltros}
+              disabled={!temFiltrosAtivos}
+              className="flex items-center gap-2"
+            >
+              <X size={16} />
+              Limpar filtros
+            </Button>
+          </div>
         </div>
       )}
 

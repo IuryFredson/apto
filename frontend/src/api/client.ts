@@ -3,18 +3,40 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 export class ApiError extends Error {
   status: number;
   body: unknown;
+  serverMessage: string;
 
-  constructor(status: number, message: string, body: unknown) {
+  constructor(
+    status: number,
+    message: string,
+    serverMessage: string,
+    body: unknown,
+  ) {
     super(message);
+    this.name = "ApiError";
     this.status = status;
+    this.serverMessage = serverMessage;
     this.body = body;
   }
 }
 
-type Query = Record<
-  string,
-  string | number | boolean | null | undefined
->;
+/** Mensagem genérica e segura para exibir ao usuário, derivada do status HTTP. */
+function mensagemGenerica(status: number): string {
+  if (status === 401)
+    return "Sua sessão expirou ou é inválida. Faça login novamente.";
+  if (status === 403) return "Você não tem permissão para realizar esta ação.";
+  if (status === 404) return "Não encontramos o que você procurava.";
+  if (status === 409)
+    return "A operação conflita com o estado atual. Atualize a página e tente novamente.";
+  if (status === 429)
+    return "Muitas tentativas em pouco tempo. Aguarde um instante e tente novamente.";
+  if (status >= 400 && status < 500)
+    return "Não foi possível concluir a operação. Verifique os dados e tente novamente.";
+  if (status >= 500)
+    return "Ocorreu um erro no servidor. Tente novamente mais tarde.";
+  return "Ocorreu um erro inesperado. Tente novamente.";
+}
+
+type Query = Record<string, string | number | boolean | null | undefined>;
 
 function buildUrl(path: string, query?: Query): string {
   const url = new URL(path.startsWith("http") ? path : BASE_URL + path);
@@ -29,7 +51,7 @@ function buildUrl(path: string, query?: Query): string {
 
 async function parseError(res: Response): Promise<ApiError> {
   let body: unknown = null;
-  let message = `HTTP ${res.status}`;
+  let serverMessage = `HTTP ${res.status}`;
   try {
     const text = await res.text();
     if (text) {
@@ -41,16 +63,22 @@ async function parseError(res: Response): Promise<ApiError> {
           message?: string;
           error?: string;
         };
-        message = obj.erro ?? obj.mensagem ?? obj.message ?? obj.error ?? message;
+        serverMessage =
+          obj.erro ?? obj.mensagem ?? obj.message ?? obj.error ?? serverMessage;
       } catch {
         body = text;
-        message = text || message;
+        serverMessage = text || serverMessage;
       }
     }
   } catch {
     // ignore
   }
-  return new ApiError(res.status, message, body);
+  return new ApiError(
+    res.status,
+    mensagemGenerica(res.status),
+    serverMessage,
+    body,
+  );
 }
 
 interface RequestOptions {
