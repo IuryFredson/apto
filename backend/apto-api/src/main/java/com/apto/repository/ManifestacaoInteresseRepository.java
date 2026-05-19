@@ -15,7 +15,17 @@ public interface ManifestacaoInteresseRepository extends JpaRepository<Manifesta
             UUID interessadoId,
             Collection<StatusManifestacaoInteresse> statuses);
 
+    boolean existsByAnuncio_Id(UUID anuncioId);
+
     List<ManifestacaoInteresse> findByAnuncio_IdOrderByDataManifestacaoDesc(UUID anuncioId);
 
     List<ManifestacaoInteresse> findByInteressado_IdOrderByDataManifestacaoDesc(UUID interessadoId);
+
+    List<ManifestacaoInteresse> findByAnuncio_IdAndStatus(
+            UUID anuncioId,
+            StatusManifestacaoInteresse status);
+
+    List<ManifestacaoInteresse> findByAnuncio_IdAndStatusIn(
+            UUID anuncioId,
+            Collection<StatusManifestacaoInteresse> statuses);
 }
